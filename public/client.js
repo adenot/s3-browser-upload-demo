@@ -3,7 +3,7 @@
 // client-side validation by fileUpload should match the policy
 // restrictions so that the checks fail early
 var acceptFileType = /.*/i;
-var maxFileSize = 1000;
+var maxFileSize = 10000000;
 // The URL to your endpoint that maps to s3Credentials function
 var credentialsUrl = '/s3_credentials';
 // The URL to your endpoint to register the uploaded file
@@ -24,13 +24,15 @@ window.initS3FileUpload = function($fileInput) {
 // to the upload form.
 function s3add(e, data) {
   var filename = data.files[0].name;
+  var type = data.files[0].type;
   var params = [];
   $.ajax({
     url: credentialsUrl,
     type: 'GET',
     dataType: 'json',
     data: {
-      filename: filename
+      filename: filename,
+      type: type
     },
     success: function(s3Data) {
       data.url = s3Data.endpoint_url;

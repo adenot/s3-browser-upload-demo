@@ -6,23 +6,24 @@ var crypto = require('crypto');
 // * region
 // * accessKey
 // * secretKey
-function s3Credentials(config, filename) {
+function s3Credentials(config, filename, type) {
   return {
-    endpoint_url: "https://" + config.bucket + ".s3.amazonaws.com",
-    params: s3Params(config, filename)
+    endpoint_url: "http://" + config.bucket + ".s3.amazonaws.com",
+    params: s3Params(config, filename, type)
   }
 }
 
 // Returns the parameters that must be passed to the API call
-function s3Params(config, filename) {
+function s3Params(config, filename, type) {
   var credential = amzCredential(config);
-  var policy = s3UploadPolicy(config, filename, credential);
+  var policy = s3UploadPolicy(config, filename, type, credential);
   var policyBase64 = new Buffer(JSON.stringify(policy)).toString('base64');
   return {
     key: filename,
     acl: 'public-read',
     success_action_status: '201',
     policy: policyBase64,
+    'content-type': type,
     'x-amz-algorithm': 'AWS4-HMAC-SHA256',
     'x-amz-credential': credential,
     'x-amz-date': dateString() + 'T000000Z',
@@ -40,7 +41,7 @@ function amzCredential(config) {
 }
 
 // Constructs the policy
-function s3UploadPolicy(config, filename, credential) {
+function s3UploadPolicy(config, filename, type, credential) {
   return {
     // 5 minutes into the future
     expiration: new Date((new Date).getTime() + (5 * 60 * 1000)).toISOString(),
@@ -50,8 +51,8 @@ function s3UploadPolicy(config, filename, credential) {
       { acl: 'public-read' },
       { success_action_status: "201" },
       // Optionally control content type and file size
-      // {'Content-Type': 'application/pdf'},
-      ['content-length-range', 0, 1000],
+      { 'Content-Type': type},
+      ['content-length-range', 0, 10000000], // 10MB
       { 'x-amz-algorithm': 'AWS4-HMAC-SHA256' },
       { 'x-amz-credential': credential },
       { 'x-amz-date': dateString() + 'T000000Z' }
